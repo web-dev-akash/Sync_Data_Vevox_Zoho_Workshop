@@ -66,11 +66,11 @@ const updateContactOnZoho = async ({ phone, config, correct }) => {
     data: [
       {
         id: contactid,
-        Lead_Source: "Vevox Sheet Testing",
-        Call_Back_Reminder: attemptDate,
+        Total_Correct: correct,
+        Workshop_Attend_Date: attemptDate,
         $append_values: {
-          Lead_Source: true,
-          Call_Back_Reminder: true,
+          Total_Correct: true,
+          Workshop_Attend_Date: true,
         },
       },
     ],
