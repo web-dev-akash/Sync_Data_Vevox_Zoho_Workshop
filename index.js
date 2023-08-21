@@ -52,6 +52,7 @@ const updateContactOnZoho = async ({ phone, config, correct }) => {
   const month = date.getMonth() + 1;
   const year = date.getFullYear();
   const attemptDate = `${year}-${month <= 9 ? "0" + month : month}-${day}`;
+  // const attemptDate = `2023-08-19`;
   const contact = await axios.get(
     `https://www.zohoapis.com/crm/v3/Contacts/search?phone=${phone}`,
     config
@@ -66,11 +67,11 @@ const updateContactOnZoho = async ({ phone, config, correct }) => {
     data: [
       {
         id: contactid,
-        Total_Correct: correct,
-        Workshop_Attend_Date: attemptDate,
+        No_of_Correct_Ans: correct,
+        Quiz_Attended_Date: attemptDate,
         $append_values: {
-          Total_Correct: true,
-          Workshop_Attend_Date: true,
+          No_of_Correct_Ans: true,
+          Quiz_Attended_Date: true,
         },
       },
     ],
@@ -107,7 +108,7 @@ app.post("/view", upload.single("file.xlsx"), async (req, res) => {
       const obj = { firstname, lastname, attemptDate };
 
       // ------------------Change date to today--------------------
-
+      // toDateString() format === "Sat Aug 19 2023"
       if (date === attemptDate) {
         currentUsers.push(obj);
       }
@@ -125,7 +126,7 @@ app.post("/view", upload.single("file.xlsx"), async (req, res) => {
 
       // ---------change phone field according to the question number----------
 
-      const phone = data2[i]["__EMPTY_3"];
+      const phone = data2[i]["__EMPTY_2"];
 
       // ----------------------------------------------------------------------
 
@@ -151,10 +152,30 @@ app.post("/view", upload.single("file.xlsx"), async (req, res) => {
         correct: finalUsers[i].correct,
       });
     }
-    res.send({
-      message: "Excel file uploaded and processed successfully.",
-      finalUsers,
-    });
+    let table = "";
+    finalUsers.map(
+      (user) =>
+        (table += `<tr>
+          <td style="border:1px solid; padding:10px 20px;">${user.firstname}</td>
+          <td style="border:1px solid; padding:10px 20px;">${user.lastname}</td>
+          <td style="border:1px solid; padding:10px 20px;">${user.correct}</td>
+          <td style="border:1px solid; padding:10px 20px;">${user.phone}</td>
+        </tr>`)
+    );
+    res.send(`
+    <div style="width : 80%; margin : 50px auto; text-align : center; display : grid; place-items:center;">
+      <h1>Excel file uploaded and processed successfully.</h1>
+      <Table style="text-align : center; font-size : 20px; margin-top : 20px; border-collapse: collapse; ">
+        <Thead>
+          <th style="border:1px solid; padding:10px 20px;">First Name</th>
+          <th style="border:1px solid; padding:10px 20px;">Last Name</th>
+          <th style="border:1px solid; padding:10px 20px;">Correct Answer</th>
+          <th style="border:1px solid; padding:10px 20px;">Phone</th>
+        </Thead>
+        ${table}
+      </Table>
+    </div>
+    `);
     await unlinkAsync(req.file.path);
   } catch (error) {
     console.error("Error reading Excel file:", error);
