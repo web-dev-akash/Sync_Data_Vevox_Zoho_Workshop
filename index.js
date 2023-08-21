@@ -61,6 +61,7 @@ const updateContactOnZoho = async ({ phone, config, correct }) => {
     console.log("Not a Zoho Contact");
     return "Not a Zoho Contact";
   }
+
   console.log("contact", contact.data);
   const contactid = contact.data.data[0].id;
   const contactBody = {
@@ -69,9 +70,11 @@ const updateContactOnZoho = async ({ phone, config, correct }) => {
         id: contactid,
         No_of_Correct_Ans: correct,
         Quiz_Attended_Date: attemptDate,
+        Contact_Status: "Web Attendee",
         $append_values: {
           No_of_Correct_Ans: true,
           Quiz_Attended_Date: true,
+          Contact_Status: true,
         },
       },
     ],
