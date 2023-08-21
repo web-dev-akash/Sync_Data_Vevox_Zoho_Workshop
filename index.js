@@ -62,7 +62,7 @@ const updateContactOnZoho = async ({ phone, config, correct }) => {
     return "Not a Zoho Contact";
   }
 
-  console.log("contact", contact.data);
+  // console.log("contact", contact.data.data[0]);
   const contactid = contact.data.data[0].id;
   const contactBody = {
     data: [
@@ -70,7 +70,7 @@ const updateContactOnZoho = async ({ phone, config, correct }) => {
         id: contactid,
         No_of_Correct_Ans: correct,
         Quiz_Attended_Date: attemptDate,
-        Contact_Status: "Web Attendee",
+        Contact_Status: ["Web Attendee"],
         $append_values: {
           No_of_Correct_Ans: true,
           Quiz_Attended_Date: true,
@@ -148,6 +148,7 @@ app.post("/view", upload.single("file.xlsx"), async (req, res) => {
         "Content-Type": "application/json",
       },
     };
+    console.log(finalUsers);
     for (let i = 0; i < finalUsers.length; i++) {
       await updateContactOnZoho({
         phone: finalUsers[i].phone,
