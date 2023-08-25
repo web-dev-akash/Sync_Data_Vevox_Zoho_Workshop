@@ -70,11 +70,11 @@ const updateContactOnZoho = async ({ phone, config, correct }) => {
         id: contactid,
         No_of_Correct_Ans: correct,
         Quiz_Attended_Date: attemptDate,
-        Contact_Status: ["Web Attendee"],
+        Status: "Web Attendee",
         $append_values: {
           No_of_Correct_Ans: true,
           Quiz_Attended_Date: true,
-          Contact_Status: true,
+          Status: true,
         },
       },
     ],
