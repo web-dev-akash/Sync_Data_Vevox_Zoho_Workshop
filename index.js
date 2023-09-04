@@ -51,8 +51,10 @@ const updateContactOnZoho = async ({ phone, config, correct }) => {
   const day = date.getDate();
   const month = date.getMonth() + 1;
   const year = date.getFullYear();
-  // const attemptDate = `${year}-${month <= 9 ? "0" + month : month}-${day}`;
-  const attemptDate = `2023-09-03`;
+  const attemptDate = `${year}-${month <= 9 ? "0" + month : month}-${
+    day <= 9 ? "0" + day : day
+  }`;
+  // const attemptDate = `2023-09-03`;
   const contact = await axios.get(
     `https://www.zohoapis.com/crm/v3/Contacts/search?phone=${phone}`,
     config
