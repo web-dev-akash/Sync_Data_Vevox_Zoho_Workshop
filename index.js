@@ -59,7 +59,7 @@ const updateContactOnZoho = async ({ phone, config, correct }) => {
     `https://www.zohoapis.com/crm/v3/Contacts/search?phone=${phone}`,
     config
   );
-  if (!contact.data) {
+  if (!contact.data || !contact.data.data[0] || !contact.data.data[0].id) {
     console.log("Not a Zoho Contact");
     return "Not a Zoho Contact";
   }
@@ -117,8 +117,8 @@ app.post("/view", upload.single("file.xlsx"), async (req, res) => {
       const obj = { firstname, lastname, attemptDate };
 
       // ------------------Change date to today--------------------
-      // toDateString() format === "Sat Aug 19 2023"
-      if ("Sun Sep 03 2023" === attemptDate) {
+      // toDateString() format === "Sun Sep 03 2023"
+      if (date === attemptDate) {
         currentUsers.push(obj);
       }
 
