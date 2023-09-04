@@ -51,8 +51,8 @@ const updateContactOnZoho = async ({ phone, config, correct }) => {
   const day = date.getDate();
   const month = date.getMonth() + 1;
   const year = date.getFullYear();
-  const attemptDate = `${year}-${month <= 9 ? "0" + month : month}-${day}`;
-  // const attemptDate = `2023-08-19`;
+  // const attemptDate = `${year}-${month <= 9 ? "0" + month : month}-${day}`;
+  const attemptDate = `2023-09-03`;
   const contact = await axios.get(
     `https://www.zohoapis.com/crm/v3/Contacts/search?phone=${phone}`,
     config
@@ -64,34 +64,38 @@ const updateContactOnZoho = async ({ phone, config, correct }) => {
 
   // console.log("contact", contact.data.data[0]);
   const contactid = contact.data.data[0].id;
-  const contactBody = {
-    data: [
-      {
-        id: contactid,
-        No_of_Correct_Ans: correct,
-        Quiz_Attended_Date: attemptDate,
-        Status: "Web Attendee",
-        $append_values: {
-          No_of_Correct_Ans: true,
-          Quiz_Attended_Date: true,
-          Status: true,
+  const status = contact.data.data[0].Status;
+  // console.log(status);
+  if (status === null) {
+    const contactBody = {
+      data: [
+        {
+          id: contactid,
+          No_of_Correct_Ans: correct,
+          Quiz_Attended_Date: attemptDate,
+          Status: "Web Attendee",
+          $append_values: {
+            No_of_Correct_Ans: true,
+            Quiz_Attended_Date: true,
+            Status: true,
+          },
         },
-      },
-    ],
-    duplicate_check_fields: ["id"],
-    apply_feature_execution: [
-      {
-        name: "layout_rules",
-      },
-    ],
-    trigger: ["workflow"],
-  };
+      ],
+      duplicate_check_fields: ["id"],
+      apply_feature_execution: [
+        {
+          name: "layout_rules",
+        },
+      ],
+      trigger: ["workflow"],
+    };
 
-  const updateContact = await axios.post(
-    `https://www.zohoapis.com/crm/v3/Contacts/upsert`,
-    contactBody,
-    config
-  );
+    const updateContact = await axios.post(
+      `https://www.zohoapis.com/crm/v3/Contacts/upsert`,
+      contactBody,
+      config
+    );
+  }
 };
 
 app.post("/view", upload.single("file.xlsx"), async (req, res) => {
@@ -112,7 +116,7 @@ app.post("/view", upload.single("file.xlsx"), async (req, res) => {
 
       // ------------------Change date to today--------------------
       // toDateString() format === "Sat Aug 19 2023"
-      if (date === attemptDate) {
+      if ("Sun Sep 03 2023" === attemptDate) {
         currentUsers.push(obj);
       }
 
@@ -129,7 +133,7 @@ app.post("/view", upload.single("file.xlsx"), async (req, res) => {
 
       // ---------change phone field according to the question number----------
 
-      const phone = data2[i]["__EMPTY_2"];
+      const phone = data2[i]["__EMPTY_2"].toString().replace(/[^0-9]/g, "");
 
       // ----------------------------------------------------------------------
 
@@ -181,10 +185,12 @@ app.post("/view", upload.single("file.xlsx"), async (req, res) => {
     </div>
     `);
     await unlinkAsync(req.file.path);
+    return;
   } catch (error) {
     console.error("Error reading Excel file:", error);
     res.status(500).send({ error: "Error reading Excel file." });
     await unlinkAsync(req.file.path);
+    return;
   }
 });
 
