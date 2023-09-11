@@ -129,7 +129,7 @@ app.post("/view", upload.single("file.xlsx"), async (req, res) => {
 
       // ---------change phone field according to the question number----------
 
-      const phone = data2[i]["__EMPTY_2"].toString().replace(/[^0-9]/g, "");
+      const phone = data2[i]["__EMPTY_2"]?.toString().replace(/[^0-9]/g, "");
 
       // ----------------------------------------------------------------------
 
