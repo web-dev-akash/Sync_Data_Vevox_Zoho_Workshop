@@ -66,38 +66,32 @@ const updateContactOnZoho = async ({ phone, config, correct }) => {
 
   // console.log("contact", contact.data.data[0]);
   const contactid = contact.data.data[0].id;
-  const status = contact.data.data[0].Status;
-  // console.log(status);
-  if (status === null) {
-    const contactBody = {
-      data: [
-        {
-          id: contactid,
-          No_of_Correct_Ans: correct,
-          Quiz_Attended_Date: attemptDate,
-          Status: "Web Attendee",
-          $append_values: {
-            No_of_Correct_Ans: true,
-            Quiz_Attended_Date: true,
-            Status: true,
-          },
+  const contactBody = {
+    data: [
+      {
+        id: contactid,
+        Workshop_Quiz_Score: correct,
+        Workshop_Quiz_Attended_Date: attemptDate,
+        $append_values: {
+          Workshop_Quiz_Score: true,
+          Workshop_Quiz_Attended_Date: true,
         },
-      ],
-      duplicate_check_fields: ["id"],
-      apply_feature_execution: [
-        {
-          name: "layout_rules",
-        },
-      ],
-      trigger: ["workflow"],
-    };
+      },
+    ],
+    duplicate_check_fields: ["id"],
+    apply_feature_execution: [
+      {
+        name: "layout_rules",
+      },
+    ],
+    trigger: ["workflow"],
+  };
 
-    const updateContact = await axios.post(
-      `https://www.zohoapis.com/crm/v3/Contacts/upsert`,
-      contactBody,
-      config
-    );
-  }
+  const updateContact = await axios.post(
+    `https://www.zohoapis.com/crm/v3/Contacts/upsert`,
+    contactBody,
+    config
+  );
 };
 
 app.post("/view", upload.single("file.xlsx"), async (req, res) => {
