@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 8080;
 const storage = multer.diskStorage({
   destination: path.join(__dirname, "uploads"),
   filename: function (req, file, cb) {
-    cb(null, file.fieldname);
+    cb(null, file.originalname);
   },
 });
 const upload = multer({ storage: storage });
@@ -94,52 +94,64 @@ const updateContactOnZoho = async ({ phone, config, correct }) => {
   );
 };
 
-app.post("/view", upload.single("file.xlsx"), async (req, res) => {
-  try {
-    const date = new Date().toDateString();
-    const workbook = xlsx.readFile("./uploads/file.xlsx");
-    const sheetName1 = workbook.SheetNames[0];
-    const sheet1 = workbook.Sheets[sheetName1];
-    const data1 = xlsx.utils.sheet_to_json(sheet1);
-    const currentUsers = [];
-    for (let i = 8; i < data1.length; i++) {
-      const firstname = data1[i][""];
-      const lastname = data1[i]["__EMPTY"];
-      const attemptDate = new Date(
-        data1[i]["__EMPTY_1"].substring(0, 11)
-      ).toDateString();
-      const obj = { firstname, lastname, attemptDate };
-
-      // ------------------Change date to today--------------------
-      // toDateString() format === "Sun Sep 03 2023"
-      if (date === attemptDate) {
-        currentUsers.push(obj);
-      }
-
-      // ----------------------------------------------------------
-    }
-    const finalUsers = [];
-    const sheetName2 = workbook.SheetNames[2];
-    const sheet2 = workbook.Sheets[sheetName2];
-    const data2 = xlsx.utils.sheet_to_json(sheet2);
-    for (let i = 7; i < data2.length - 2; i++) {
-      const firstname = data2[i]["Polling Results"];
-      const lastname = data2[i]["__EMPTY"];
-      const correct = data2[i]["__EMPTY_1"];
-
-      // ---------change phone field according to the question number----------
-
-      const phone = data2[i]["__EMPTY_2"]?.toString().replace(/[^0-9]/g, "");
-
-      // ----------------------------------------------------------------------
-
-      const userFound = currentUsers.find(
-        (user) => user.firstname === firstname && user.lastname === lastname
+app.post("/view", upload.array("file", 50), async (req, res) => {
+  const files = req.files;
+  if (files.length === 0) {
+    return res
+      .status(400)
+      .send(
+        `<h1 style="display:grid;place-items:center;min-height:100vh;">No files were uploaded.</h1>`
       );
-      if (userFound && phone) {
-        const obj = { firstname, lastname, correct, phone };
-        finalUsers.push(obj);
+  }
+  try {
+    const finalUsers = [];
+    for (const file of files) {
+      console.log(file.path);
+      const date = new Date().toDateString();
+      const workbook = xlsx.readFile(file.path);
+      const sheetName1 = workbook.SheetNames[0];
+      const sheet1 = workbook.Sheets[sheetName1];
+      const data1 = xlsx.utils.sheet_to_json(sheet1);
+      const currentUsers = [];
+      for (let i = 8; i < data1.length; i++) {
+        const firstname = data1[i][""];
+        const lastname = data1[i]["__EMPTY"];
+        const attemptDate = new Date(
+          data1[i]["__EMPTY_1"].substring(0, 11)
+        ).toDateString();
+        const obj = { firstname, lastname, attemptDate };
+
+        // ------------------Change date to today--------------------
+        // toDateString() format === "Sun Sep 03 2023"
+        if (date === attemptDate) {
+          currentUsers.push(obj);
+        }
+
+        // ----------------------------------------------------------
       }
+      const sheetName2 = workbook.SheetNames[2];
+      const sheet2 = workbook.Sheets[sheetName2];
+      const data2 = xlsx.utils.sheet_to_json(sheet2);
+      for (let i = 7; i < data2.length - 2; i++) {
+        const firstname = data2[i]["Polling Results"];
+        const lastname = data2[i]["__EMPTY"];
+        const correct = data2[i]["__EMPTY_1"];
+
+        // ---------change phone field according to the question number----------
+
+        const phone = data2[i]["__EMPTY_2"]?.toString().replace(/[^0-9]/g, "");
+
+        // ----------------------------------------------------------------------
+
+        const userFound = currentUsers.find(
+          (user) => user.firstname === firstname && user.lastname === lastname
+        );
+        if (userFound && phone) {
+          const obj = { firstname, lastname, correct, phone };
+          finalUsers.push(obj);
+        }
+      }
+      await unlinkAsync(file.path);
     }
     const token = await getZohoToken();
     const config = {
@@ -166,7 +178,7 @@ app.post("/view", upload.single("file.xlsx"), async (req, res) => {
           <td style="border:1px solid; padding:10px 20px;">${user.phone}</td>
         </tr>`)
     );
-    res.send(`
+    return res.status(200).send(`
     <div style="width : 80%; margin : 50px auto; text-align : center; display : grid; place-items:center;">
       <h1>Excel file uploaded and processed successfully.</h1>
       <Table style="text-align : center; font-size : 20px; margin-top : 20px; border-collapse: collapse; ">
@@ -180,12 +192,12 @@ app.post("/view", upload.single("file.xlsx"), async (req, res) => {
       </Table>
     </div>
     `);
-    await unlinkAsync(req.file.path);
-    return;
   } catch (error) {
     console.error("Error reading Excel file:", error);
     res.status(500).send({ error: "Error reading Excel file." });
-    await unlinkAsync(req.file.path);
+    for (const file of files) {
+      await unlinkAsync(file.path);
+    }
     return;
   }
 });
